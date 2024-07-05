@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Map User Location</title>
+    <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
+    />
+
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+
+    <!-- leaflet routing machine js file -->
+    <!-- <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script> -->
+
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+    <style>
+      #map {
+        height: 100vh;
+        width: 100vw;
+        cursor: crosshair;
+      }
+
+      h1 {
+        text-align: center;
+        color: #3498db;
+        font-family: "Ariel", sans-serif;
+        font-size: 2em;
+        font-weight: bold;
+      }
+
+      body {
+        /* display: flex; */
+        justify-content: center;
+        align-items: center;
+        height: 100vh; /* Use the full height of the viewport */
+        margin: 0; /* Remove default margin */
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Map User Location</h1>
+    <script src="leaflet-hash.js"></script>
+
+    <div id="map"></div>
+
+    <script>
+      console.log(L);
+      //* L is the leaflet object
+      let map = L.map("map");
+      // the 3 values indicate the latitude, longitude and the zoom level in the map tile
+      map.setView([20.5937, 78.9629], 8);
+
+      //* specifies the tile from the openstreetmap.org tile layout
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution:
+          '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      }).addTo(map);
+
+      //* LeafLet Search
+      L.Control.geocoder().addTo(map);
+
+      navigator.geolocation.watchPosition(success, error);
+
+      let marker, circ, zoomed;
+
+      function success(pos) {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const accuracy = pos.coords.accuracy;
+
+        const customIcon = L.icon({
+          iconUrl: "./permanent.svg",
+          iconSize: [70, 70],
+        });
+
+        // * Checking if the marker is present, the remove recurring markers
+        if (marker) {
+          map.removeLayer(marker);
+          map.removeLayer(circ);
+        }
+
+        // * else create the marker and its circle for the first time
+        marker = L.marker([lat, lng], {
+          title: "Navigator Location",
+          icon: customIcon,
+        }).addTo(map);
+        circ = L.circle([lat, lng], { radius: accuracy }).addTo(map);
+
+        //* capturing the zoom value for only one time
+        if (!zoomed) {
+          zoomed = map.fitBounds(circ.getBounds());
+        }
+
+        //* following the map marker throughout the map
+        map.setView([lat, lng]);
+      }
+
+      function error(err) {
+        if (err.code == 1) {
+          alert("Please allow geolocation access");
+        }
+      }
+
+      // LeafLet Hash
+      let hash = new L.Hash(map);
+
+      let marker1 = null;
+
+      map.on("click", function (e) {
+        let coord = e.latlng;
+        let lat = coord.lat;
+        let lng = coord.lng;
+
+        console.log(e, lat, lng);
+
+        const tempMarker = L.icon({
+          iconUrl: "./temporary.svg",
+          iconSize: [70, 70],
+        });
+
+        if (marker1) {
+          marker1.remove();
+        }
+
+        // add marker
+        marker1 = L.marker([lat, lng], {
+          title: " Temporary",
+          icon: tempMarker,
+        })
+          .addTo(map)
+          .bindPopup(
+            "<h3>Your Location</h3>" +
+              "<p>Latitude: " +
+              lat +
+              "</p>" +
+              "<p>Longitude: " +
+              lng +
+              "</p>" +
+              '<a href="https://www.google.com/maps/search/?api=1&query=' +
+              lat +
+              "," +
+              lng +
+              '" target="_blank">Open in Google Maps</a>'
+          )
+          .openPopup();
+      });
+    </script>
+  </body>
+</html>
